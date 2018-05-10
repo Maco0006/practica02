@@ -1,0 +1,71 @@
+header{
+	color: white; font-family:Comic Sans MS,arial,verdana; font-size: large;
+	border: black 2px solid;
+	margin: 20px;
+	padding: 20px;
+	background: url("img/celeste2.jpg") repeat-x bottom, url("img/celeste2.jpg");
+	background-size: contain;
+	
+}
+.main {
+	background:#f2f2f2;
+}
+h1:first-letter {
+  font-size: 2em;
+}
+.color1 {
+	background: #34495e;
+	color:#fff;
+}
+.textodesplazable{
+	
+    background : white;
+    color : black;
+	font-family:Comic Sans MS,arial,verdana; 
+	font-size: large;
+    padding : 4px;
+    width : 350px;
+    height :500px;
+	border : gray 2px solid;
+    overflow : scroll; 
+	visibility : hidden; 
+}
+.textodesplazabledos{
+	
+    background : white;
+    color : black;
+	font-family:Comic Sans MS,arial,verdana; 
+	font-size: large;
+    padding : 4px;
+	border : gray 2px solid;
+	height : 350px;
+    overflow : scroll; 
+	visibility : hidden; 
+}
+.generictext {
+	
+    background : white;
+    color : black;
+	font-family:Comic Sans MS,arial,verdana; 
+	font-size: large;
+	padding : 4px;
+    width : 350px;
+    height :70px;
+	text-align: center;
+	visibility : hidden; 
+	
+}
+.estilofotos{
+	color: balck; font-family:Comic Sans MS,arial,verdana; font-size: large;
+	margin-left: 150px;
+	margin-right: 360px;
+}
+
+footer {
+	background:#16a085;
+	color:#fff;
+}
+
+.nover{
+	 visibility : hidden;
+ }
