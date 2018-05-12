@@ -6,16 +6,33 @@
 <html>
 	<head>
 		<!-- configuración-->
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta charset="utf-8">
 		<!-- Para que se vea en dispositivos moviles -->
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- Estilos de Boostrap -->
-		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
-		<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
-		<script type="text/javascript" src="http://getbootstrap.com/dist/js/bootstrap.js"></script>
-		<link type="text/css" rel="stylesheet" href="http://getbootstrap.com/dist/css/bootstrap.css">
-		<!-- Mi estilos -->
-		<link rel="stylesheet" type="text/css" href="resources/estilos.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  		
+  		<style>
+		    /* Remove the navbar's default rounded borders and increase the bottom margin */ 
+		    .navbar {
+		      margin-bottom: 50px;
+		      border-radius: 0;
+		    }
+		    
+		    /* Remove the jumbotron's default bottom margin */ 
+		     .jumbotron {
+		      margin-bottom: 0;
+		    }
+		   
+		    /* Add a gray background color and some padding to the footer */
+		    footer {
+		      background-color: #f2f2f2;
+		      padding: 25px;
+		    }
+		</style>
+		  
 	</head>
 	
 	<body>

@@ -6,60 +6,86 @@
 
 	<head>
 		<!-- configuración-->
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Registro</title>
+		<meta charset="utf-8">
 		<!-- Para que se vea en dispositivos moviles -->
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- Estilos de Boostrap -->
-		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
-		<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
-		<script type="text/javascript" src="http://getbootstrap.com/dist/js/bootstrap.js"></script>
-		<link type="text/css" rel="stylesheet" href="http://getbootstrap.com/dist/css/bootstrap.css">
-		<!-- Mi estilos -->
-		<link rel="stylesheet" type="text/css" href="resources/estilos.css">
-		<!-- Ajustes -->
-		<title>Dcervezas</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 		<!--  JQuery -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 
+		<style>
+		    /* Add a gray background color and some padding to the footer */
+		    footer {
+		      background-color: #f2f2f2;
+		      padding: 25px;
+		    }
+		    th, td{
+		    	padding: 10px;
+		    }
+	 	</style>
+	  
+	  
 	</head>
 
 	
 	<body onload="<c:if test="${err!=null}"> alert('${err}') </c:if>">
 		<%! int puerto = 8080; %>
 		<div class="container">
-		  	<nav role="navigation" class="navbar navbar-default">
-		        <div class="navbar-header">
-		            <a href="index" class="navbar-brand"> <img src="resources/img/logo.jpg" width="25" height="25"  alt="logo"/> </a>
-		        </div>
-		    </nav>
+		  	<nav class="navbar navbar-inverse">
+				  <div class="container-fluid">
+				    <div class="navbar-header">
+				      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+				        <span class="icon-bar"></span>
+				        <span class="icon-bar"></span>
+				        <span class="icon-bar"></span>                        
+				      </button>
+				      <a href="index">
+				      <img src="resources/img/logoflyunicorn.jpg" width="50" height="50">
+				      </a>
+				    </div>
+				    <div class="collapse navbar-collapse" id="myNavbar">
+				      <ul class="nav navbar-nav">
+				        <li class="active"><a href="index">Home</a></li>
+				      </ul>
+				      <ul class="nav navbar-nav navbar-right">
+				      </ul>
+				    </div>
+				  </div>
+				</nav>
+
 		</div>
 
 		<div class="container">
 			<div class="jumbotron" style="text-align:center">
 				<form class="form-horizontal" action="registro" method=post>
+				<h2>Formulario de registro:</h2><br/>
 					<!-- Email -->
 				    <div class="form-group">
 
 				        <label class="control-label col-xs-3">Email:</label>				
 				        <div class="col-xs-6">
-	            			<input type="email" class="form-control" placeholder="Email" name=email id="inputEmail" value="andres@pablo" required>  
+	            			<input type="email" class="form-control" placeholder="Email" name=email id="inputEmail" required>  
 				        </div>
 				        <span id="msg2"> </span>
 				    </div>
 
 				    <!-- Contraseña -->
 				    <div class="form-group">
-				        <label class="control-label col-xs-3">Password:</label>
+				        <label class="control-label col-xs-3">Contraseña:</label>
 				        <div class="col-xs-6">
-				            <input type="password" class="form-control" placeholder="Password" name=key id="inputPassword" value="1234" required>
+				            <input type="password" class="form-control" placeholder="Password" name=key id="inputPassword" required>
 				        </div>
 				    </div>
 				    <!-- Nombre -->
 				    <div class="form-group">
 				        <label class="control-label col-xs-3">Nombre:</label>        
 				        <div class="col-xs-6">
-				            <input type="text" class="form-control" placeholder="Nombre" name=name id="inputName" value="Andres" required >
+				            <input type="text" class="form-control" placeholder="Nombre" name=name id="inputName" required>
 				        </div>
 				       <span id="msg1"> </span>
 				    </div>
@@ -67,21 +93,21 @@
 				    <div class="form-group">
 				        <label class="control-label col-xs-3">Apellidos:</label>
 				        <div class="col-xs-6">
-				            <input type="text" class="form-control" placeholder="Apellidos" name=apellidos id="inputApellidos" value="Pablo" required>
+				            <input type="text" class="form-control" placeholder="Apellidos" name=apellidos id="inputApellidos" required>
 				        </div>
 				    </div>
 				    <!-- Telefono -->
 				    <div class="form-group">
 				        <label class="control-label col-xs-3" >Telefono:</label>
 				        <div class="col-xs-6">
-				        	<input type="tel" class="form-control" placeholder="Telefono" name=telf id="inputTelefono" value="12356789" required >
+				        	<input type="tel" class="form-control" placeholder="Telefono" name=telf id="inputTelefono" required >
 				        </div>
 				    </div>
 				    <!-- Direccion -->
 				    <div class="form-group">
 				        <label class="control-label col-xs-3">Dirección:</label>
 				        <div class="col-xs-7">
-				            <textarea rows="3" class="form-control"  placeholder="C/ o Avd." name=dir id="inputDireccion" value="C/ Martinez, Ubeda (JAEN)" required></textarea>
+				            <textarea rows="3" class="form-control"  placeholder="C/ o Avd." name=dir id="inputDireccion" required></textarea>
 				        </div>
 				    </div>
 				    <!-- Terminos & Condiciones -->
@@ -104,6 +130,11 @@
 				</form>
 			</div>
 		</div>
+		
+		<footer class="container-fluid text-center">
+  			<p>Online Store Copyright</p>  
+		</footer>
+		
 		<!-- Uso de AJAX para validar si existe ya un nombre de usuario mediante jQuery -->
 		<script type="text/javascript">
 			$('#inputName').blur(function(){

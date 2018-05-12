@@ -6,54 +6,66 @@
 <html>
 	<head>
 		<!-- configuración-->
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Bienvenido</title>
+		<meta charset="utf-8">
 		<!-- Para que se vea en dispositivos moviles -->
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- Estilos de Boostrap -->
-		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
-		<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
-		<script type="text/javascript" src="http://getbootstrap.com/dist/js/bootstrap.js"></script>
-		<link type="text/css" rel="stylesheet" href="http://getbootstrap.com/dist/css/bootstrap.css">
-		<!-- Mi estilos -->
-		<link rel="stylesheet" type="text/css" href="resources/estilos.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
 		
 		<!--  JQuery -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+	
+ 	<style>
+	    /* Remove the navbar's default rounded borders and increase the bottom margin */ 
+	    .navbar {
+	      margin-bottom: 50px;
+	      border-radius: 0;
+	    }
+	    	   
+	    footer {
+	      background-color: #f2f2f2;
+	      padding: 25px;
+	    }
+	
+	</style>
+
 	</head>
 	
 	<body onload="<c:if test="${err!=null}"> alert('${err}') </c:if>" >
 		<%! int puerto = 8080; %>
 		
-		<div class="container">
-		  <nav role="navigation" class="navbar navbar-default">
+
+		  <nav class="navbar navbar-inverse">
 		        <div class="navbar-header">
-		            <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
-		                <span class="sr-only">Toggle navigation</span>
+		            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myCollapse">
 		                <span class="icon-bar"></span>
 		                <span class="icon-bar"></span>
 		                <span class="icon-bar"></span>
 		            </button>
-		            <a href="index" class="navbar-brand"> <img src="resources/img/logo.jpg" width="25" height="25" > </a>
+		            <a href="index"> <img src="resources/img/logoflyunicorn.jpg" width="50" height="50"></a>
 		        </div>
 	
-		        <div id="navbarCollapse" class="collapse navbar-collapse">
-		            <ul class="nav navbar-nav pull-right">                   
-		            	<li class="dropdown"> <a href="productos" > Ver productos. </a> </li>
-		            	<li class="dropdown"><a href="mostrarCarrito" > Carrito </a> </li>
-						<li class="dropdown"><a href="logout" >logout</a> </li>
-						
+		        <div id="myNavbar" class="collapse navbar-collapse">
+		            <ul class="nav navbar-nav">
+		            	<li class="dropdown"> <a href="index">Home</a>
+		            	<li class="dropdown"> <a href="productos">Productos</a></li>
+		            </ul>
+		            <ul class="nav navbar-nav navbar-right">	
+		            	<li class="dropdown"><a href="mostrarCarrito">Carrito</a></li>
+						<li class="dropdown"><a href="logout">Logout</a></li>
 		            </ul>
 		        </div>
 		    </nav>
-		</div>
 		
 		<div class="container">
 			<p>
-				Hola <c:out value = "${usuario.nombre},${usuario.apellidos}" />  usted solo puede:
-					<ul>
-						<li> Efectuar compras.
-						<li> Cambiar datos.
-					</ul>
+				<h3>Te damos la bienvenida, <c:out value = "${usuario.nombre} ${usuario.apellidos}" />. Ahora podrás visitar nuestro catálogo de productos.</h3>
+				<br/><br/>
+				Si deseas cambiar tus datos, rellena los siguientes campos:
 			</p>
 		</div>
 		
@@ -90,7 +102,7 @@
 				    <td> Contrase&ntilde;a</td>
 				    <td> </td>
 				    <td> 
-				    <input class="form-control" id="pass" name="pass" type="password"  placeholder="Password">
+				    <input class="form-control" id="pass" name="pass" type="password"  placeholder="Contraseña">
 				    </td>
 				  </tr>
 				  
@@ -118,6 +130,12 @@
 			  </table>
 			</div>
 		</form>
+		
+		</br></br>
+		
+		<footer class="container-fluid text-center">
+  			<p>Online Store Copyright</p>  
+		</footer>
 	    
 	    <!-- Uso de AJAX para validar si existe ya un nombre de usuario mediante jQuery -->
 		<script type="text/javascript">
