@@ -23,1110 +23,893 @@ import com.ingenieria.model.producto.*;
 import com.ingenieria.model.user.*;
 
 
-
-/**
- * Handles requests for the application home page.
- */
 @Controller
 public class HomeController {
-	//Vista que cambia el recurso jsp
-	final String [] vistas = {"index","registro","admin","bienvenido","compra","carrito","terminos"};
-	
-	//Busca en servlet-content un bean que implemente un DaoUsuario_Interface,
-	//para poder acceder a la base de datos
-	@Autowired
-	DaoUsuario_Interface daou; 
-	
-	//Busca en servlet-content un bean que implemente un DaoProducto_Interface, 
-	//para poder acceder a la base de datos
-	@Autowired
-	DaoProducto_Interface daop;
 	
 	
-	/**
-	 * Método para resolver petición http://localhost:8080/practica02/
-	 * Permite el acceso de un usuario para registrarse o administrar la web
-	 * 
-	 * @param request Petición del cliente
-	 * @param response Respuesta hacia el cliente en la que se envía la cookie
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena de caracteres que indican el nombre de la vista
-	 */
+	@Autowired //Busca en servlet-content un bean que implemente DaoUsuario_Interface para el acceso a la base de datos.
+	DaoUsuario_Interface daousuario; 
+
+	@Autowired //Busca en servlet-content un bean que implemente DaoProducto_Interface para el acceso a la base de datos.
+	DaoProducto_Interface daoproducto;
+	
+	
+	//Método que permite el acceso de un usuario a la página de registro de la web. Puede ser un usuario normal o administrador.
 	@RequestMapping(value ={"/", "/index"}, method = {RequestMethod.GET,RequestMethod.POST} )
 	public String index(HttpServletRequest request, HttpServletResponse response, Model model){
 		
-		Boolean haycookies = true;
-		//Fecha del sistema
-    		Date today = new Date();
+		Boolean existencookies = true;
 		
-		//Para almacenar los productos de compra
-		List<DtoProducto> listaCompra = null;
+    	Date today = new Date(); //Fecha del sistema.
+		
+		List<DtoProducto> listaCompra = null; //Lista donde se almacenan los productos de la compra.
+		
 		//Variable para guardar una vista jsp 
-		String vista = null;
+		//String vista = null;
 		
-		//Permite asociar una sesión a un usuario
-		HttpSession session;
+		HttpSession sesion; //Para asociar una sesión a un usuario.
 		
-    		//Contiene los datos del usuario que realizó la petición
-		DtoUsuario usuarioDB = null;
+		DtoUsuario userdatab = null; //Aquí se encuentran los datos del usuario que realiza la petición.
 		
-
 		Boolean esuser=false;
 		Boolean esadmin=false;
 		
-		//Método que obtiene la sesión de la petición, y si no existe da error
-		session = request.getSession(false);
-		
-		DtoUsuario user;
-		
-		//Aviso de errores
-		String [] errores ={"Contrase&ntilde;a err&oacute;rena","Error en el usuario o no existe"};
-		String err = null; //Por defecto sin errores.
-		
-		if(session!=null){
-			//Extraemos el objeto usuario de la sesión
-			user = (DtoUsuario) session.getAttribute("usuario");
-		}else{
-			user = null;
-		}
-		
 
-		//Si existe usuario en la sesión
-		if(user!=null){
+		sesion = request.getSession(false); //Obtenemos la sesión de la petición. En caso de que no exista, dará error.
+		
+		DtoUsuario usuario;
+
+		String error = ""; //Aviso de errores.		
+		
+		if(sesion!=null) usuario = (DtoUsuario) sesion.getAttribute("usuario"); //Extraemos el objeto usuario de la sesión
+		else usuario = null;
+
+		
+		if(usuario!=null) { //Comprobamos si existe un usuario en la sesión.
+			
 			System.out.println("Existe sesión");
-			//Mostramos nombre
-			System.out.println("Nombre: "+user.getNombre());
+			System.out.println("Nombre: " + usuario.getNombre()); //Mostramos nombre del usuario.
+			Boolean existeusuario = daousuario.buscaNombre(usuario.getNombre()); //Comprobamos si existe en la base de datos el usuario con email de la cookie.
 			
-			//Comprobamos si existe en la BD el usuario con email de la cookie
-			Boolean existeusuario = daou.existsName(user.getNombre());
-			
-			if(existeusuario){
+			if(existeusuario) {
 				
-				if(user.getAdmin()){
-					esadmin = true;
+				if(usuario.getAdmin()) {
 					
-					//Obtenemos la lista de usuario y la agregamos a la vista.
-					model.addAttribute("listaUsuario",daou.read());
+					esadmin = true;					
+					model.addAttribute("listaUsuario", daousuario.leeUsuarios()); //Obtenemos la lista de usuario y la pasamos a la vista.
+					return "admin";
 					
-					//Mostramos la página del administrador
-					vista = vistas[2];
+				} else {
 					
-				}else{
 					esuser=true;
-					//Mostramos la página de bienvenido
-					vista = vistas[3];
+					return "bienvenido";
+					
 				}
-			}else{
-				//Mostramos la página de inicio
-				vista = vistas[0];
+				
+			} else {
+
 				System.out.println("No existe usuario de sesión en base de datos");
+				return "index";
+				
+				
 			}
 			
 			
-		}else{//Si no existe sesión
-			System.out.println("NO Existe sesión");
-			//Extraemos las cookies de la petición
-			Cookie[] cookies = request.getCookies();
+		} else { //Si no existe sesión
 			
-			//Si existen las cookies
-			if(cookies!=null){
+			System.out.println("NO Existe sesión");
+
+			Cookie[] cookies = request.getCookies(); //Extraemos las cookies de la petición.
+			
+			if(cookies!=null) { //Si existen cookies.
 				
-				//Recorremos las cookies
-				for (Cookie cookie: cookies){
-					//Hasta que encontramos la que se llama email
-					if ("email".equals(cookie.getName())){
+				for(Cookie cookie : cookies) { //Recorremos las cookies. Este tipo de bucle for recorre todos los valores dentro de cookies hasta encontrar
+												//la cookie que se llama email.
+					if("email".equals(cookie.getName())) {
+						
 						System.out.println("Existen cookies");
 						
-						//Actualizamos el tiempo de la cookie que devolveremos a 1 dia
-						cookie.setMaxAge(60*60*24);
+						cookie.setMaxAge(60*60*24); //Establecemos el tiempo de la cookie (1 día).
+						String valorCookie = cookie.getValue(); //Obtenemos el valor de email.
+						Boolean existeusuario = daousuario.buscaEmail(valorCookie); //Comprobamos si existe el usuario en la base de datos a través de su email.
 						
-						//Obtiene el valor del campo email
-						String valorCookie = cookie.getValue();
-						//Comprobamos si existe en la BD el usuario con email de la cookie
-						Boolean existeUsu = daou.existsEmail(valorCookie);
-						
-						if(existeUsu){
+						if(existeusuario) {
+							
 							System.out.println("Existe usuario de cookies");
 							
-							//Sacamos objeto de la clase Usuario
-							usuarioDB=daou.obtenerUsu(valorCookie);
+							userdatab = daousuario.extraerUsuario(valorCookie); //Extraemos el usuario de la clase usuario.
+							model.addAttribute("usuario", userdatab); //Y lo enviamos a la vista.
+							DtoUsuario userdto = daousuario.extraerUsuario(valorCookie);
 							
-							//Enviamos el objeto de la clase Usuario al jsp
-							model.addAttribute("usuario", usuarioDB);
-							
-							DtoUsuario usuario = daou.obtenerUsu(valorCookie);
-							
-							if(usuario.getAdmin()){
+							if(userdto.getAdmin()) {
+								
 								esadmin=true;
+								
 								System.out.println("entra1");
 								
-							}else if(!usuario.getAdmin()){
-								esuser=true;
-								
-								try{
-									//Método que obtiene la sesión de la petición, y si no existe da error
-									session = request.getSession(false);
-									
-									//Extraemos el objeto usuario de la sesión
-									DtoUsuario usuar = (DtoUsuario) session.getAttribute("usuario");
-									System.out.println("Hay sesion");
-									//Mostramos nombre
-									System.out.println("Nombre: "+usuar.getNombre());
-									
-									//Mostramos la vista bienvenido.jsp
-									vista=vistas[3];
-									
-									
-								}catch(NullPointerException e){//Si no hay sesión
-									System.out.println("No hay sesión");
-									
-									//Obtenemos fecha de creación de la sesión
-									SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm:SS");
-						        	String date = DATE_FORMAT.format(today);
-						        	System.out.println("Conexion: " + date);
-									
-						        	
-									//Creamos la sesión
-									session = request.getSession(true);
-									//Añadimos el usuario en la sesión
-									session.setAttribute ("usuario",usuarioDB);
-						        	//Añadimos la fecha en la sesion
-									session.setAttribute("date", date);
-									//Establecemos la lista de productos a null
-									session.setAttribute("lista", listaCompra);
-									//Inicializamos el total de la sesión.
-									Double total=0.0;
-									session.setAttribute("total", total);
-									//Establecemos la expiración de la sesión a 1 hora
-									session.setMaxInactiveInterval(60*60);							
-
-									
-									//Enviamos la lista de productos al jsp
-									model.addAttribute("lista", listaCompra);
-									
-									//Mostramos bienvenido.jsp
-									vista=vistas[3];
-								}
-								
-								
-							}
-							
-							//Agregamos la cookie a la respuesta
-							response.addCookie(cookie);
-							
-							//Enviamos el objeto de la clase Usuario al jsp
-							model.addAttribute("usuario", usuarioDB);
-							
-						}else{
-							System.out.println("No existe usuario de la cookie");
-						}
-						
-					}
-				}
-				
-				if(esadmin==false && esuser==false){
-					//Si tampoco hay cookies
-					System.out.println("NO Existen cookies");
-					
-					haycookies=false;
-				}
-				
-			}
-			if(cookies==null || haycookies==false){
-				//Petición con parámetros vacíos
-				if(request.getParameter("email")==null || request.getParameter("key")==null){
-					//Mostramos index.jsp
-					vista = vistas[0];
-					
-				}else{//Si hay datos en la petición
-					
-					//Leemos parámetros del formulario index.jsp
-					String id_user = request.getParameter("email");
-					String id_key = request.getParameter("key");
-					
-					//Imprimimos por consola del servidor el usuario y la contraseña
-					System.out.println("name= "+id_user+" key= "+id_key);
-					
-					//Comprobamos si existe en la base de datos
-					Boolean existeUsu = daou.existsEmail(id_user);
-					
-					//Si no existe
-					if (!existeUsu){
-						System.out.println("Error en el usuario o no existe");
-						
-						//Pasamos error a la vista
-						err = errores[1];
-						
-						//Web para que se registre como usuario (registro.jsp)
-						vista = vistas[0];
-						
-					}else{//Si existe
-						System.out.println("Usuario existe");
-						
-						//Obtenemos los datos del usuario
-						usuarioDB = daou.obtenerUsu(id_user); 
-						
-						//Si no coincide la clave de la base de datos
-						if(!usuarioDB.getClave().equals(id_key)){
-							System.out.println("Error en la pass.");
-							
-							//Pasamos error a la vista
-							err = errores[0];
-							
-							vista = vistas[0];
-							
-						}else{//La clave coincide
-							
-							//Creamos la cookie.
-							System.out.println("Creamos cookie y sesion");
-							Cookie cookie = new Cookie("email",usuarioDB.getEmail());
-							// Tiempo de la cookie 1 dia
-						    cookie.setMaxAge(60*60*24);
-							
-							//Si el usuario es administrador
-							if(usuarioDB.getAdmin()){
-								
-								esadmin = true;
-								
-							}else{//Si es usuario
+							} else if(!userdto.getAdmin()) {
 								
 								esuser = true;
 								
-								model.addAttribute("usuario", usuarioDB);
+								try {
+
+									sesion = request.getSession(false); //Obtenemos la sesión de la petición. En caso de que no exista, dará error.
+									DtoUsuario dtouser = (DtoUsuario) sesion.getAttribute("usuario"); //Extraemos el usuario de la sesión.
+									
+									System.out.println("Hay sesion");
+									System.out.println("Nombre: " + dtouser.getNombre()); //Mostramos el nombre del usuario.
+									
+									return "bienvenido";									
+									
+								} catch(NullPointerException e) { //Si no existe sesión.
+									
+									System.out.println("No hay sesión");
+									
+									SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z"); //Obtenemos la fecha del inicio de la sesión.
+						        	String fecha = DATE_FORMAT.format(today); //Formateo de la fecha.
+						        	System.out.println("Conexion: " + fecha);
+
+									sesion = request.getSession(true); //Creamos sesión.
+									sesion.setAttribute ("usuario", userdatab); //Añadimos el usuario a la sesión.
+									sesion.setAttribute("fecha", fecha); //Añadimos la fecha a la sesión.
+									sesion.setAttribute("lista", listaCompra); //Establecemos la lista de los productos.
+									Double total = 0.0; //Total de la sesión.
+									sesion.setAttribute("total", total);
+									sesion.setMaxInactiveInterval(60*60); //La sesión expirará al cabo de una hora.					
+
+									model.addAttribute("lista", listaCompra); //Enviamos la lista a la vista.
+									
+									return "bienvenido";
+
+								}
+								
+							}
+							
+							response.addCookie(cookie); //Añadimos la cookie a la respuesta.
+							model.addAttribute("usuario", userdatab); //Enviamos el objeto usuario a la vista.
+							
+						} else System.out.println("No existe usuario de la cookie");
+													
+					}
+				}
+				
+				if(esadmin == false && esuser == false) { //Si no existen cookies.
+
+					System.out.println("NO Existen cookies");
+					existencookies=false;
+					
+				}
+				
+			}
+			
+			if(cookies == null || existencookies == false) {
+
+				if(request.getParameter("email") == null || request.getParameter("pass") == null) return "index"; //Si no hay datos en la petición.
+				else { //Si hay datos en la petición
+					
+					String idusuario = request.getParameter("email"); //Leemos parámetros del formulario index.jsp
+					String idpass = request.getParameter("pass");
+					
+					System.out.println("name= " + idusuario + "pass= " + idpass);
+					
+					Boolean existeusuario = daousuario.buscaEmail(idusuario); //Comprobamos que el usuario existe en la base de datos.
+
+					if (!existeusuario) { //Si no existe el usuario.
+						
+						System.out.println("Error en el usuario o no existe");
+
+						error = "Error en el usuario o no existe";
+						
+						return "registro";
+						
+					} else { //Si el usuario existe.
+						
+						System.out.println("Usuario existe");
+						
+						userdatab = daousuario.extraerUsuario(idusuario); //Extraemos los datos del usuario.
+
+						if(!userdatab.getPassword().equals(idpass)) { //Si no coincide la contraseña de la base de datos.
+							
+							System.out.println("Error en la pass.");
+							
+							error = "Contraseña incorrecta"; //Pasamos el error a la vista.
+							return "index";
+							
+						} else { //Si la contraseña coincide.
+
+							System.out.println("Creamos cookie y sesion"); //Creamos la cookie.
+							
+							Cookie cookie = new Cookie("email", userdatab.getEmail());
+
+						    cookie.setMaxAge(60*60*24); //Tiempo que dura la cookie (1 día).
+
+							if(userdatab.getAdmin()) { //Si el usuario es administrador.
+								
+								esadmin = true;
+								
+							} else { //Si es usuario
+								
+								esuser = true;
+								model.addAttribute("usuario", userdatab);
+								
 							}
 
-							//La agregamos a la respuesta
-							response.addCookie(cookie);
+							response.addCookie(cookie); //Agregamos a la cookie de respuesta.
+							
 						}
 					}
 				}
 			}
 		}
 			
-		
-		
-		
 		if(esadmin){
-        	//Creamos la sesión
-		    session = request.getSession(true);
-			
-			//Obtenemos fecha de creación de la sesión
-			SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm:SS");
-        	String date = DATE_FORMAT.format(today);//Realizamos el formateo de la fecha.
+
+		    sesion = request.getSession(true); //Se crea la sesión.
+
+			SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z"); //Obtenemos la fecha de creación de la sesión.
+        	String date = DATE_FORMAT.format(today); //Formateo de la fecha.
         	
-			//Añadimos el usuario en la sesión
-			session.setAttribute ("usuario",usuarioDB);
-			//Añadimos la fecha en la sesión
-			session.setAttribute("date", date);
-			//Establecemos la expiración de la sesión a 60 minutos
-			session.setMaxInactiveInterval(30*60);
+			sesion.setAttribute ("usuario", userdatab); //Añadimos el usuario a la sesión.
+			sesion.setAttribute("date", date); //Añadimos la fecha en la sesión.
+			sesion.setMaxInactiveInterval(30*60); //Expiración de la sesión: 60 minutos.
 			
-			//Obtenemos la lista de usuario y la agregamos a la vista.
-			model.addAttribute("listaUsuario",daou.read());
+			model.addAttribute("listaUsuario", daousuario.leeUsuarios()); //Obtenemos la lista de usuario y la pasamos a la vista.
 			
-			//Mostramos la vista del administrador admin.jsp
-			vista = vistas[2];
+			return "admin";
 			
-		}else if(esuser){
+		} else if(esuser) {
 			
-			try{
+			try {
+				
 				System.out.println("try");
-				//Método que obtiene la sesión de la petición, y si no existe da error
-				session = request.getSession(true);
+
+				sesion = request.getSession(true); //Obtenemos la sesión de la petición. Si no existe, da error.
 				
-				//Extraemos el objeto usuario de la sesión
-				DtoUsuario usuario = (DtoUsuario) session.getAttribute("usuario");
+				DtoUsuario userdto = (DtoUsuario) sesion.getAttribute("usuario"); //Extraemos el usuario de la sesión.
+
+				System.out.println("Nombre: "+ userdto.getNombre());
+
+				listaCompra = (List<DtoProducto>) sesion.getAttribute("lista"); //Accedemos a la lista de la compra que se ha almacenado en la sesión.
 				
-				//Mostramos nombre
-				System.out.println("Nombre: "+usuario.getNombre());
-				
-				//Accedemos a la lista de compra almacenada en la sesión
-				listaCompra = (List<DtoProducto>) session.getAttribute("lista");
-				
-				//Mostramos la vista bienvenido.jsp
-				vista=vistas[3];
+				return "bienvenido";
 					
-			}catch(NullPointerException e){
+			} catch(NullPointerException e) {
+				
 				System.out.println("catch");
 				
-				Metodos.CrearSession(request, usuarioDB, listaCompra);
+				Metodos.CrearSession(request, userdatab, listaCompra);
 				
-				//Enviamos la lista de productos al jsp
-				model.addAttribute("lista", listaCompra);
+				model.addAttribute("lista", listaCompra); //Mandamos la laista de productos a la vista.
 				
-				//Mostramos la vista bienvenido.jsp
-				vista=vistas[3];
+				return "bienvenido";
+				
 			}
+			
 		}
 		
-		//Mostramos la vista correspondiente en funicón del resultado.
-		model.addAttribute("err", err);
-		return vista;
+		model.addAttribute("error", error);
+		return null;
+		
 	}
 
 
-	/**
-	 * Método para resolver petición http://localhost:8080/practica02/registro
-	 * Permite el acceso de un usuario para registrarse
-	 * 
-	 * @param request Petición del cliente
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena de caracteres que indican el nombre de la vista
-	 */
-	@RequestMapping(value = "/registro", method = {RequestMethod.GET,RequestMethod.POST})
-	public String registro(HttpServletRequest request,Model model) {
+	//Método que permite el registro de un usuario.
+	@RequestMapping(value = "/registro", method = {RequestMethod.GET, RequestMethod.POST})
+	public String registro(HttpServletRequest request, Model model) {
 		
-		String vista;
-		String err=null;
+		String error = "";
+
+		List<DtoProducto> lista = new ArrayList<DtoProducto> (); //Lista de los productos.
 		
-		
-		//Lista que contiene los productos
-		List<DtoProducto> lista = new ArrayList<DtoProducto> ();
-		
-		//Si alguno de los campos del formulario es null
-		if(request.getParameter("name")==null|| request.getParameter("key")==null ||
-				request.getParameter("apellidos")==null || request.getParameter("email")==null ||
-				request.getParameter("dir")==null || request.getParameter("telf")==null){
+		if(request.getParameter("name") == null || request.getParameter("pass") == null || request.getParameter("apellidos") == null || request.getParameter("email") == null ||
+				request.getParameter("dir") == null || request.getParameter("telf") == null) { //Si alguno de los campos es null.
 			
-			//Volvemos a cargar la página registro.jsp
-			vista = vistas[1];
+			return "registro";
 			
-		}else{//Si no hay fallo al introducir un nuevo usuario
+		} else { //Si no hay fallo al introducir un nuevo usuario.
 			
-			//Extraemos los datos del formulario
-			String nombre = request.getParameter("name");
+			String nombre = request.getParameter("name"); //Extraemos los datos del formulario.
 			String email = request.getParameter("email");
 			
-			if(daou.existsName(nombre) || daou.existsEmail(email)){
-				
-				//Volvemos a cargar la página de usuario (registro.jsp)
-				vista = vistas[1];
-				err= "Nombre o email en uso.";
+			if(daousuario.buscaNombre(nombre) || daousuario.buscaEmail(email)) {
+								
+				return "registro"; //Cargamos la página de registro de nuevo.
+
+				error = "Nombre o email en uso.";
 				System.out.println("Nombre o email duplicado");
 				
-			}else{
+			} else {
 				
-				//Devolvemos la vista "bienvenido.jsp"
-				vista = vistas[3];
-				err=null;
+				return "bienvenido";
 				
-				// Extraemos del formulario el resto de datos
-				String apellidos = request.getParameter("apellidos");
-				String key = request.getParameter("key");
-				String direccion =request.getParameter("dir");
-				String telf= request.getParameter("telf");
+				String apellidos = request.getParameter("apellidos"); //Extraemos del formulario el resto de datos.
+				String pass = request.getParameter("pass");
+				String direccion = request.getParameter("dir");
+				String telf = request.getParameter("telf");				
+				boolean admin;
 				
-				//Se crea el objeto de la clase Usuario
-				DtoUsuario usuario = new DtoUsuario (nombre, key, apellidos, email, direccion, telf);
+				DtoUsuario userdto = new DtoUsuario (nombre, pass, apellidos, email, direccion, telf, admin); //Creamos el objeto de la clase usuario.
 							
 				//Añadimos al usario en la base de datos.
-				daou.create(usuario);
+				daousuario.insertaUsuario(userdto);
 				
-				Metodos.CrearSession(request, usuario, lista);
+				Metodos.CrearSession(request, userdto, lista);
 
-				//Enviamos el objeto de la clase Usuario al jsp
-				model.addAttribute("usuario", usuario);//request.setAttribute("usuario", usuario);
-				//Enviamos la lista de productos al jsp
-				model.addAttribute("lista", lista);//request.setAttribute("lista", lista);
+				model.addAttribute("usuario", userdto); //Enviamos el usuario a la vista.
+				model.addAttribute("lista", lista); //Enviamos la lista a la vista.
 
 			}
 			
 		}
 		
-		model.addAttribute("err", err);
-
-		return vista;
+		model.addAttribute("error", error);
+		
+		return null;
+		
 	}
 	
 	
-	/**
-	 * Método para resolver petición http://localhost:8080/practica02/productos
-	 * Permite el acceso de un usuario para ver los productos a comprar
-	 * 
-	 * @param request Petición del cliente
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena de caracteres que indican el nombre de la vista
-	 */
+	//Método que permite al usuario ver los productos de la tienda.
 	@RequestMapping(value = "/productos", method = {RequestMethod.GET,RequestMethod.POST})
-	public String productos(HttpServletRequest request,Model model) {
-		
-		//Variable para cambiar la vista
-		String vista;
-		
-		try{
+	public String productos(HttpServletRequest request, Model model) {
+	
+		try {
+			
 			System.out.println("Entro en productos, Si hay sesion");
 			
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
-			
-			//Extraemos el objeto usuario de la sesión
-			DtoUsuario user = (DtoUsuario) session.getAttribute("usuario");
-			
-			//Mostramos nombre
-			System.out.println(user.getNombre());
-			
-			//Accedemos a la base de datos de productos.
-			List<DtoProducto> listaProductos = daop.read();
-			
-			//Enviamos lista al jsp
-			model.addAttribute("lista", listaProductos);
-			
-			//Cambiamos a vista de compra.jsp
-			vista = vistas[4];
+			HttpSession sesion = request.getSession(false); //Comprobamos si existe la sesión. Si no existe, da error.
+			DtoUsuario usuario = (DtoUsuario) sesion.getAttribute("usuario"); //Extraemos el usuario de la sesión.
 
+			System.out.println(usuario.getNombre());
+			
+			List<DtoProducto> listaProductos = daoproducto.leeProductos(); //Accedemos a la base de datos de los productos.
 
-		}catch(NullPointerException e){//Si no se ha creado la sesión correctamente
+			model.addAttribute("lista", listaProductos); //Enviamos la lista a la vista.
+
+			return "compra";
+
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente
 			
 			System.out.println("Sesión no creada, volver a registrar. ");
-			
-			//Cambiamos a index, problemas al inicio de sesion.
-			vista = vistas[0];
+
+			return "index";
 
 		}
 		
-		return vista;
 	}
 
-	/**
-	 * Método para resolver petición http://localhost:8080/practica02/carrito
-	 * Permite el acceso de un usuario para ver los productos ya comprados
-	 * 
-	 * @param request Petición del cliente
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena de caracteres que indican el nombre de la vista
-	 */
-	@RequestMapping(value = "/carrito", method = {RequestMethod.GET,RequestMethod.POST})
+	
+	//Método que permite al usuario ver los productos que se encuentran en el carrito de la compra.
+	@RequestMapping(value = "/carrito", method = {RequestMethod.GET, RequestMethod.POST})
 	public String carrito(HttpServletRequest request, Model model) {
-				
-		//Variable para cambiar la vista
-		String vista;
+						
+		String error = "";
 		
-		String err = null;
+		int contador = 0;
 		
-		int contador=0;
-		
-		
-		String [] opcion=null,cantidad=null;
-
+		String [] opcion = null, cantidad = null;
 
 		try{
+
+			HttpSession sesion = request.getSession(false); //Comprobamos si existe la sesión de la petición. Si no existe, da error.
+
+			DtoUsuario usuario = (DtoUsuario) sesion.getAttribute("usuario"); //Extraemos el usuario de la sesión.
+			Double total = (Double) sesion.getAttribute("total");
+
+			List<DtoProducto> listaCompra = (List<DtoProducto>) sesion.getAttribute("lista"); //Obtenemos la lista de objetos de la sesión.
+
+			List<DtoProducto> listaProductos = (ArrayList<DtoProducto>) daoproducto.leeProductos(); //Accedemos a la base de datos de los productos.
 			
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
-			
-			//Extraemos el objeto usuario de la sesión
-			DtoUsuario user = (DtoUsuario) session.getAttribute("usuario");
-			Double total = (Double) session.getAttribute("total");
-			//Extraemos la lista de objetos de la sesión 
-			List<DtoProducto> listaCompra = (List<DtoProducto>) session.getAttribute("lista");
-			
-			//Accedemos a la base de datos de productos.
-			List<DtoProducto> listaProductos = (ArrayList<DtoProducto>) daop.read();
-			
-			//Si opción (de compra.jsp) es distinto de null
-			if(request.getParameter("opcion")!=null){
-				
-				//Recogemos opción
-				opcion = request.getParameterValues("opcion");//Obtenemos el id del producto seleccionado. Hemos hecho que coindica el id con el valor de la opcion.
-				cantidad= request.getParameterValues("uni");//Obtenemos las cantidades de los productos seleccionados.
-				
-				
-				//Recorremos las posibles opciones
-				for(int i=0; i<opcion.length;i++){
-					//Recorremos los productos
-					for(int j=0; j<listaProductos.size();j++){
-						
-						//Si coincide el id de la opción, con el id del producto
-						if(Integer.parseInt(opcion[i])== listaProductos.get(j).getId()){
-							
-							//Si la cantidad es ""
-							if(cantidad[j].equals("")){
+			if(request.getParameter("opcion")!=null) {
+
+				opcion = request.getParameterValues("opcion"); //Obtenemos el id del producto seleccionado. El id coincide con el valor de la opción.
+				cantidad= request.getParameterValues("unidades"); //Obtenemos las cantidades de los productos seleccionados.
+
+				for(int i=0; i<opcion.length; i++) { //Recorremos las posibles opciones.
+
+					for(int j=0; j<listaProductos.size(); j++) { //Recorremos los productos.
+
+						if(Integer.parseInt(opcion[i]) == listaProductos.get(j).getIdproducto()) { //Si la id de la opción coincide con la id del producto.
+
+							if(cantidad[j].equals("")) { //Si no se ha introducido ninguna cantidad.
+								
 								System.out.println("No ha indicado ninguna cantidad.");
-								err="Introduce una cantidad.";
+								error = "Introduce una cantidad.";
 								
-							}else{
-								
-								//Si la cantidad es 0
-								if(Integer.parseInt(cantidad[j])==0){
-									//No se ha insertado ninguna cantidad.
-									System.out.println("Ningun producto.");
-									err="Indica cantidad del producto selecionado";
+							} else {
+
+								if(Integer.parseInt(cantidad[j]) == 0) { //Si no hay ninguna cantidad (es 0).
 									
-								}else{
-									//Si la cantidad es menor que 0
-									if(Integer.parseInt(cantidad[j])<0){//|| Integer.parseInt(cantidad[j])>listaProductos.get(j).getUnidades()
-										//Cantidad no válida
+									System.out.println("Ningun producto.");
+									error = "Indica cantidad del producto selecionado";
+									
+								} else {
+
+									if(Integer.parseInt(cantidad[j])<0){ //Si la cantidad es menor que cero (negativo).
+
 										System.out.println("Cantidad no válida.");
-										err="Cantidad no válida.";
+										error = "Cantidad no válida.";
 										
-									}else{//Si es válida la cantidad
+									} else { //Si la cantidad introducida es válida.
 										
-										int cantid = Integer.parseInt(cantidad[j]);
+										int cantidades = Integer.parseInt(cantidad[j]);
 										
-										if(cantid>listaProductos.get(j).getUnidades()){
-											//Productos insuficiente.
+										if(cantidades > listaProductos.get(j).getCantidad()) { //Si se piden más productos de los que hay.
+
 											System.out.println("Productos insuficientes.");
-											err="Productos insuficientes.";
+											error = "Productos insuficientes.";
 											
-										}else{
-											//Si no se ha realizado ninguna compra todavía
-											if(listaCompra == null){
+										} else {
+
+											if(listaCompra == null) { //Si todavía no se ha realizado ninguna compra.
+												
 												listaCompra = new ArrayList();
+												
 											}
 											
-											if(listaCompra.isEmpty()){//Esta vacía
+											if(listaCompra.isEmpty()) { //Si la lista de la compra está vacía.
 												
-												cantid = Integer.parseInt(cantidad[j]); //Extraemos la cantidad solicitada.
-												
-												//Calculamos lo que debe
-												total = total + Integer.parseInt(cantidad[j]) * listaProductos.get(j).getImporte(); 
-												//Indicamos la cantidad
-												listaProductos.get(j).setUnidades(cantid);
+												cantidades = Integer.parseInt(cantidad[j]); //Extraemos la cantidad solicitada.
+												total = total + Integer.parseInt(cantidad[j]) * listaProductos.get(j).getPrecio(); //Calculamos el importe.
+												listaProductos.get(j).setCantidad(cantidades); //Indicamos la cantidad de producto solicitada.
 												listaCompra.add(listaProductos.get(j));
 												
 												
-											}else{//Ya se realizó una compra anteriormente
+											} else { //Si ya se ha hecho una compra antes.
+												
 												System.out.println("Ya hay compra");
 												
-												//Recorremos la lista de la compra
-												for(int o=0;o<listaCompra.size();o++){
-													
-													//Si el id de la lista coincide con el del producto elegido
-													if(listaCompra.get(o).getId() == listaProductos.get(j).getId()){
+												for(int o=0; o<listaCompra.size(); o++) { //Recorremos la lista de la compra.
+
+													if(listaCompra.get(o).getIdproducto() == listaProductos.get(j).getIdproducto()) { //Si el id del producto coincide con el producto elegido.
+
+														cantidades = Integer.parseInt(cantidad[j]); //Obtenemos la cantidad existente.
 														
-														//Extraemos la cantidad existente
-														cantid = Integer.parseInt(cantidad[j]); 
-														
-														if(cantid+listaCompra.get(o).getUnidades()>listaProductos.get(j).getUnidades()){
-															//Productos insuficiente.
-															System.out.println("Productos insuficientes.");
-															err="Productos insuficientes.";
+														if(cantidades + listaCompra.get(o).getCantidad() > listaProductos.get(j).getCantidad()) { //Si no hay productos suficientes.
+
+															System.out.println("Productos insuficientes."); 
+															error = "Productos insuficientes.";
 															
-														}else{
-															//Calculamos lo que debe
-															total = total + Integer.parseInt(cantidad[j]) * listaProductos.get(j).getImporte(); 
-															listaProductos.get(j).setUnidades(Integer.parseInt(cantidad[j]));
-															listaCompra.get(o).setUnidades(cantid+listaCompra.get(o).getUnidades());
+														} else {
 															
-															//Indicamos que ya se ha introducido el producto
-															contador=0;
-															//Salimos del for
-															o=listaCompra.size();
+															total = total + Integer.parseInt(cantidad[j]) * listaProductos.get(j).getPrecio(); //Calculamos el importe.
+															listaProductos.get(j).setCantidad(Integer.parseInt(cantidad[j]));
+															listaCompra.get(o).setCantidad(cantidades + listaCompra.get(o).getCantidad());
+															
+															contador=0; //Ya se ha introducido el producto.
+
+															o = listaCompra.size();
+															
 														}
-													}else{
-														//Indicamos que el producto seleccionado no esta en la lista de compra
-														contador=2;
+														
+													} else {
+
+														contador = 2; //El producto que se ha elegido no está en la lista de la compra.
+														
 													}
+													
 												}
+												
+											}
+
+											if(contador == 2) { //Añadimos el nuevo producto a la lista de compra.
+
+												cantidades = Integer.parseInt(cantidad[j]); //Extraemos la cantidad solicidtada.
+												
+												if(cantidades > listaProductos.get(j).getCantidad()) { //Si no hay productos suficientes.
+
+													System.out.println("Productos insuficientes.");
+													error = "Productos insuficientes.";
+													
+												} else {
+													
+													total = total + Integer.parseInt(cantidad[j]) * listaProductos.get(j).getPrecio(); //Calculamos el importe.
+													listaProductos.get(j).setCantidad(cantidades);//Indicamos la cantidad solicidata
+													listaCompra.add(listaProductos.get(j));
+													
+													contador = 0;
+													
+												}
+												
 											}
 											
-											//Si el contador es 2
-											if(contador==2){//Añadimos el nuevo producto a la lista de compra
-												//Extraemos la cantidad solicitada
-												cantid = Integer.parseInt(cantidad[j]);
-												
-												if(cantid>listaProductos.get(j).getUnidades()){
-													//Productos insuficiente.
-													System.out.println("Productos insuficientes.");
-													err="Productos insuficientes.";
-													
-												}else{
-													//Calculamos lo que debe
-													total = total + Integer.parseInt(cantidad[j]) * listaProductos.get(j).getImporte();
-													listaProductos.get(j).setUnidades(cantid);//Indicamos la cantidad solicidata
-													listaCompra.add(listaProductos.get(j));
-													contador=0;
-												}
-											}
 											contador++;
+											
 										}
+										
 									}
+									
 								}
+								
 							}
+							
 						}
+						
 					}
+					
 				}
 				
-				//Si se insertó algún objeto al carrito
-				if(contador!=0){
+				if(contador != 0) { //Si hay algún objeto en el carrito.
 					
-					//Muestro vista de carrito
-					vista=vistas[5];
 
-					//Actualizamos la sesión con la nueva compra
-					session.setAttribute ("lista",listaCompra);
-					session.setAttribute("total", total);
+					sesion.setAttribute ("lista",listaCompra); //Se actualiza la sesión con la compra nueva.
+					sesion.setAttribute("total", total);
 					
-				}else{//No se insertó nigún objeto al carrito
+					return "carrito";
+
 					
-					//Muestro vista de compra
-					vista=vistas[4];
+				} else { //Si no hay ningún objeto en el carrito.
+
+					model.addAttribute("lista", daoproducto.leeProductos()); //Pasamos la lista de productos a la vista.
+					model.addAttribute("error", error);
 					
-					//Enviamos lista de productos al jsp
-					model.addAttribute("lista", daop.read());
-					model.addAttribute("err",err);
+					return "compra";
+					
 				}
 				
-			}else{ //Si no elige ningún producto
+			} else { //Si no se ha elegido ningún producto.
 
-				vista=vistas[4];
-				err="No has seleccionado ningun producto";
+				error = "No has seleccionado ningun producto";
 				
-				//Enviamos lista de productos al jsp
-				model.addAttribute("lista", daop.read());
-				model.addAttribute("err",err);
+				model.addAttribute("lista", daoproducto.leeProductos()); //Pasamos la lista de productos a la vista.
+				model.addAttribute("error",error);
+				
+				return "compra";
+
 			}
 			
-		}catch(NullPointerException e){//Si no se ha creado la sesión correctamente
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
 			
-			//Vista para que inicie sesion index.jps
-			vista=vistas[0];
 			System.out.println("Sesion no creada, volver a registrar.");
+			
+			return "index";
+		
 		}
 		
-		return vista;
 	}
 
-	/**
-	 * Método para resolver petición http://localhost:8080/practica02/eliminar
-	 * Permite a un usuario, borrar de la sesión, algún producto anteriormente seleccionado
-	 * 
-	 * @param idDelete Id del producto a borrar
-	 * @param request Petición del cliente
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena que indica el jsp a mostrar
-	 */
+	
+	//Método que permite al usuario eliminar un producto seleccionado durante la sesión.
 	@RequestMapping(value = "/eliminar", method = {RequestMethod.GET})
-	public String eliminar(@RequestParam(value="name",required=true) int idDelete,HttpServletRequest request, Model model) {
+	public String eliminar(@RequestParam(value = "name", required=true) int delete, HttpServletRequest request, Model model) {
 		
-		String vista;
-		
-		try{
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
-						
-			//Extraemos la lista de objetos de la sesión 
-			List<DtoProducto> listaCompra = (List<DtoProducto>) session.getAttribute("lista");
-			//Extraemos total de la sesión
-			 double total = (Double) session.getAttribute("total");
+		try {
+
+			HttpSession sesion = request.getSession(false);
+			List<DtoProducto> listaCompra = (List<DtoProducto>) sesion.getAttribute("lista");
+			double total = (Double) sesion.getAttribute("total"); //Obtenemos el total de la sesión.
 			 
-			 int i=0;
-			 //Recorremos la lista de la compra
-			 while(i<listaCompra.size()){
-				 
-				 //Si el id del producto a borrar es igual al de la lista
-				 if(listaCompra.get(i).getId() == idDelete){
+			int i = 0;
+
+			while(i<listaCompra.size()) { //Recorremos la lista de la compra.
+
+				 if(listaCompra.get(i).getIdproducto() == delete) { //Si el id del producto que se desea borrar es igual al de la lista.
 					 
-					 //Se descuenta del total, las unidades por el precio de cada una
-					 total=total - listaCompra.get(i).getImporte()*listaCompra.get(i).getUnidades();
-					 //Eliminamos el producto de la lista
-					 listaCompra.remove(i);
-					 
-					 //Salimos de la lista
-					 i=listaCompra.size();
+					 total = total - listaCompra.get(i).getPrecio()*listaCompra.get(i).getCantidad(); //Se descuenta del total.
+					 listaCompra.remove(i); //Eliminamos el producto de la lista.
+
+					 i = listaCompra.size(); //Salimos de la lista.
 				 }
+				 
 				 i++;
-			 }
+				 
+			}
 			 
-			 if(total<0) total=0.0; //Por problemas de decimales.
-			 
-		 	//Actualizamos la sesión con la nueva lista y el nuevo precio	
-			session.setAttribute ("lista",listaCompra);
-			session.setAttribute("total", total);
+			if(total<0) total = 0.0; //Por problemas de decimales.
+
+			sesion.setAttribute ("lista",listaCompra); //Actualizamos la sesión con la lista nueva y el precio nuevo.
+			sesion.setAttribute("total", total);
+
+			return "carrito";
 			
-			//Mostramos la lista de compra.
-			vista=vistas[5];
-			
-		}catch(NullPointerException e){//Si no se ha creado la sesión correctamente
-			
-			//Vista para que inicie sesion index.jps
-			vista=vistas[0];
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
+
 			System.out.println("Sesion no creada, volver a registrar.");
+			
+			return "index";
+			
 		}
 		
-		return vista;
 	}
 	
-	/**
-	 * Método para resolver la petición http://localhost:8080/practica02/fin
-	 * Se accede una vez vuelva el cliente de la página de paypal,
-	 * y permite actualizar la base de datos con los productos comprados
-	 * 
-	 * @param request Petición del cliente
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena que indica el jsp a mostrar
-	 */
+
+	//Método que lleva al cliente a la página de paypal y permite actualizar la base de datos con los productos comprados.
 	@RequestMapping(value = "/fin", method = RequestMethod.GET)
 	public String finCompra(HttpServletRequest request, Model model) {
 		
-		//Variable para cambiar la vista
-		String vista;
-		
 		Double total;
 		
-		List<DtoProducto> listaProductos = daop.read();
+		List<DtoProducto> listaProductos = daoproducto.leeProductos();
 		
-		try{
-			//Método que obtiene la sesión de la petición, y si no existe da error
+		try {
+
 			HttpSession session = request.getSession(false);
-						
-			//Extraemos la lista de objetos de la sesión 
-			List<DtoProducto> listaCompra = (List<DtoProducto>) session.getAttribute("lista");
-			//Extraemos total de la sesión
-			total = (Double) session.getAttribute("total");
-			
-			//Recorremos la lista de la compra
-			for(int i=0;i<listaCompra.size();i++){
+			List<DtoProducto> listaCompra = (List<DtoProducto>) session.getAttribute("lista"); //Extraemos la lista de la sesión.
+			total = (Double) session.getAttribute("total"); //Extraemos el total de la sesión.
+
+			for(int i=0; i<listaCompra.size(); i++) { //Recorremos la lista de la compra.
+				
 				int j=0;
-				//Recorremos la lista de productos
-				while(j<listaProductos.size()){
-					//Si el id del carrito y el id de la lista de productos coincide
-					if(listaCompra.get(i).getId()==listaProductos.get(j).getId()){
-						
-						//Se restan las unidades de la base de datos
-						daop.actualizar(listaProductos.get(i).getUnidades()-listaCompra.get(i).getUnidades(), listaProductos.get(j).getId());
+
+				while(j<listaProductos.size()){ //Recorremos la lista de productos.
+
+					if(listaCompra.get(i).getIdproducto()==listaProductos.get(j).getIdproducto()){ //Si la id del carrito y la id de la lista de productos coincide.
+
+						daoproducto.actualizaPrecio(listaProductos.get(i).getCantidad() - listaCompra.get(i).getCantidad(), listaProductos.get(j).getIdproducto()); //Restamos las unidades de la base de datos.
 						j=listaProductos.size();
 					}
+					
 					j++;
+					
 				}
+				
 			}
 			 
 			total=0.0; //Por problemas de decimales.
+			
 			listaCompra = new ArrayList();
 			
-			//Actualizamos la sesión con lista y total vacíos
-			session.setAttribute ("lista",listaCompra);
+			session.setAttribute ("lista",listaCompra); //Actualizamos la sesión con la lista y el valor del total vacíos.
 			session.setAttribute("total", total);
-			//Mostramos la lista de compra.
-			vista=vistas[5];
 			
-		}catch(NullPointerException e){//Si no se ha creado la sessión correctamente
+			return "carrito";
 			
-			//Vista para que inicie sesion index.jps
-			vista=vistas[0];
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
+
 			System.out.println("Sesion no creada, volver a registrar.");
+			
+			return "index";
+			
 		}
-		return vista;
+
 	}
 	
-	/**
-	 * Método para resolver la petición http://localhost:8080/practica02/logout
-	 * Permite al usuario eliminar sesión y cookies para utilizar otra cuenta
-	 * 
-	 * @param request Petición del cliente
-	 * @param model Objeto para pasar parámetros a la vista
-	 * @return Cadena que indica el jsp a mostrar
-	 */
+	
+	//Método que permite eliminar la sesión y las cookies para utilizar una cuenta diferente.
 	@RequestMapping(value = "/logout", method = RequestMethod.GET)
-	public String logout(HttpServletRequest request,HttpServletResponse response, Model model) {
-		//Variable para cambiar la vista
-		String vista;
+	public String logout(HttpServletRequest request, HttpServletResponse response, Model model) {
 		
-		try{
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
-			
-			//Invalidamos la sesión
-			session.invalidate();
-			
-			//Extraemos las cookies de la peticion.
-			Cookie[] cookies = request.getCookies();
+		try {
 
-			int i=0;
-			//Recorremos las cookies
-			while(i<cookies.length){
-				//Si coincide con la de nombre email
-				if(cookies[i].getName().equals("email")){
-					//Borramos la cookie
-					cookies[i].setValue(" ");
+			HttpSession session = request.getSession(false);
+
+			session.invalidate(); //Invalidamos la sesión.
+
+			Cookie[] cookies = request.getCookies(); //Extraemos las cookies de la petición.
+
+			int i = 0;
+			
+			while(i<cookies.length) { //Recorremos las cookies.
+
+				if(cookies[i].getName().equals("email")){ //Si coincide con el nombre del email, borramos la cookie.
+
+					cookies[i].setValue(" ");					
+					response.addCookie(cookies[i]); //Pasamos la cookie a la respuesta.
 					
-					//Agregamos la cookie a la respuesta
-					response.addCookie(cookies[i]);
-					
-					//Salimos del while
-					i=cookies.length;
+					i = cookies.length; //Salimos del bucle.
 				}
+				
 				i++;
 			}
-			 
-			//Mostramos la lista de index.jsp.
-			vista=vistas[0];
+
+			return "index";
 			
 			
-		}catch(NullPointerException e){//Si no se ha creado la sessión correctamente
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
 			
-			//Vista para que inicie sesion index.jps
-			vista=vistas[0];
-			System.out.println("Sesion no creada, volver a registrar.");
+			return "index";
+			
 		}
 		
-		return vista;
 	}
 	
-	/**
-	 * Método para resolver la petición http://localhost:8080/practica02/nameDisponible
-	 * Permite a la vista de registro, comprobar si existe un usuario ya registrado con el nombre
-	 * 
-	 * @param idName Nombre del parámetro de petición, del formulario
-	 * @return Cadena que indica el jsp a mostrar
-	 */
-	@RequestMapping(value = "/nameDisponible", method = RequestMethod.GET)
-	public @ResponseBody String nameDisponible(@RequestParam(value="name",required=true) String idName) {
-		String msg=null;
+	
+	//Método utilizado para, en la vista de registro, comprobar si ya existe un usuario a través de un nombre.
+	@RequestMapping(value = "/nombreDisponible", method = RequestMethod.GET)
+	public @ResponseBody String nombreDisponible(@RequestParam(value = "name", required = true) String nombre) {
 		
-		//Variable que indica si existe el nombre de usuario
-		boolean existe = daou.existsName(idName);
+		String mensaje = "";
+
+		boolean existeuser = daousuario.buscaNombre(nombre); //Indica si el nombre de usuario existe.
 		
 		//Si existe, cambia el mensaje de la vista
-		if(existe)	msg = "<strong> Usuario ya existe </strong>";
+		if(existeuser) mensaje = "El usuario ya existe";
 		
-		return msg;
+		return mensaje;
+		
 	}
 	
-	/**
-	 * Método para resolver la petición http://localhost:8080/practica02/emailDisponible
-	 * Permite a la vista de registro, comprobar si existe un usuario ya registrado con el email
-	 * 
-	 * @param idEmail email del parámetro de petición, del formulario
-	 * @return Cadena que indica el jsp a mostrar
-	 */
+
+	//Método utilizado para, en la vista de registro, comprobar si ya existe un usuario a través de un email.
 	@RequestMapping(value = "/emailDisponible", method = RequestMethod.GET)
-	public @ResponseBody String emailDisponible(@RequestParam(value="email",required=true) String idEmail) {
-		String msg=null;
+	public @ResponseBody String emailDisponible(@RequestParam(value = "email", required = true) String email) {
 		
-		//Variable que indica si existe el nombre de usuario
-		boolean existe = daou.existsEmail(idEmail);
+		String mensaje = "";
 		
-		//Si existe, cambia el mensaje de la vista
-		if(existe)	msg = "<strong> Email ya existe </strong>";
+		boolean existeemail = daousuario.buscaEmail(email); //Indica si existe el usuario por su email.
+
+		if(existeemail)	mensaje = "Email ya existe"; //Si existe, cambia el mensaje de la vista.
 		
-		return msg;
-	}
-	/**
-	 * Método para ir al perfil (bienvenido.jsp) del usuario
-	 * 
-	 * @param request de tipo HttpServletRequest
-	 * @param model de tipo Model
-	 * @return vista de tipo String
-	 */
-	@RequestMapping(value = "/perfil", method = RequestMethod.GET)
-	public String perfil(HttpServletRequest request,Model model) {
-		String vista;
-		try{
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
-			
-			//Extraemos el objeto usuario de la sesión
-			DtoUsuario user = null;
-			user = (DtoUsuario) session.getAttribute("usuario");
-			
-			if(user!=null){ //Produce un NullPointerException si no hay session.
-				model.addAttribute("usuario", user);	
-			}
-			
-			vista= vistas[3];
-			
-			
-		}catch(NullPointerException e){//Si no se ha creado la sessión correctamente
-			//Vista para que inicie sesion index.jsp
-			vista=vistas[0];
-			System.out.println("Sesion no creada o caducada, volver a registrar.");
-		}
-		return vista;
+		return mensaje;
+		
 	}
 	
-	/**
-	 * Método para resolver la petición http://localhost:8080/practica02/cambiar
-	 * Permite al usuario cambiar cualquier campo de datos de su perfil.
-	 * 
-	 * @param request de tipo HttpServletRequest
-	 * @param model de tipo Model
-	 * @return vista de tipo String
-	 */
+	
+	//Método que lleva al perfil del usuario.
+	@RequestMapping(value = "/perfil", method = RequestMethod.GET)
+	public String perfil(HttpServletRequest request, Model model) {
+
+		try {
+
+			HttpSession sesion = request.getSession(false);
+
+			DtoUsuario usuario = null; //Extraemos el usuario de la sesión.
+			usuario = (DtoUsuario) sesion.getAttribute("usuario");
+			
+			if(usuario != null) model.addAttribute("usuario", usuario);	//Produce una excepción si no hay session.
+			
+			return "bienvenido";			
+			
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
+
+			System.out.println("Sesion no creada o caducada, volver a registrar.");
+			
+			return "index";
+			
+		}
+
+	}
+	
+	
+	//Método que permite al usuario, dentro de su perfil, modificar cualquiera de sus datos.
 	@RequestMapping(value = "/cambiar", method = RequestMethod.POST)
-	public String cambiar(HttpServletRequest request, Model model,HttpServletResponse response) {
-		String vista;
-		String errores[] = {"Nombre ya en uso","Email ya en uso"};
-		String emailAntiguo;
-		String err=null;
-		try{
+	public String cambiar(HttpServletRequest request, HttpServletResponse response, Model model) {
+
+		String emaildeantes;
+		String error = "";
+		
+		try {
 			
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
+			HttpSession sesion = request.getSession(false);
 			
-			//Extraemos el objeto usuario de la sesión
-			DtoUsuario user = (DtoUsuario) session.getAttribute("usuario");
-			System.out.println("User session: "+user.getEmail());
-			//Obtenemos los datos solicitados a cambiar
-			String usr = request.getParameter("name");
+			DtoUsuario usuario = (DtoUsuario) sesion.getAttribute("usuario"); //Extraemos el usuario de la sesión.
+			
+			System.out.println("User session: " + usuario.getEmail());
+			
+			String name = request.getParameter("name"); //Obtenemos los datos solicitados que se desean cambiar..
 			String email = request.getParameter("email");
-			String telf = request.getParameter("telf");
-			String apll = request.getParameter("apellidos");
-			String dir = request.getParameter("dir");
+			String telefono = request.getParameter("telf");
+			String apellidos = request.getParameter("apellidos");
+			String direccion = request.getParameter("dir");
 			String pass = request.getParameter("pass");
 			
-			//Extremos el e-email del propietario de la sesion y cookie.
-			emailAntiguo=user.getEmail();
+			emaildeantes = usuario.getEmail(); //Extraemos el email del usuario.
 			
 			//Actualizamos campos.
-			if(!usr.equals("")){
-				if(!daou.existsName(usr)){
-					user.setNombre(usr);
-				}else{
-					err=errores[0];
-				}
+			if(!name.equals("")){ //Si el campo nombre no está vacío.
+				
+				if(!daousuario.buscaNombre(name)) usuario.setNombre(name);
+				else error = "El nombre ya está en uso";
 				
 			}
 			
-			if(!email.equals(""))
-			{
+			if(!email.equals("")) { //Si el campo email no está vacío.
+			
 				System.out.println(email);
-				if(!daou.existsEmail(email)){
-					user.setEmail(email);
-						
-					//Modificamos la cooki del servicio.
+				
+				if(!daousuario.buscaEmail(email)) {
 					
-					
-					//Extraemos las cookies de la peticion.
-					Cookie[] cookies = request.getCookies();
+					usuario.setEmail(email);
+
+					Cookie[] cookies = request.getCookies(); //Extraemos las cookies de la petición.
 
 					int i=0;
-					//Recorremos las cookies
-					while(i<cookies.length){
-						//Si coincide con la de nombre email
-						if(cookies[i].getName().equals("email")){
-							//Borramos la cookie
-							cookies[i].setValue(email);
+
+					while(i < cookies.length) { //Recorremos las cookies.
+
+						if(cookies[i].getName().equals("email")) { //Si coincide con el email.
 							
-							//Agregamos la cookie a la respuesta
-							response.addCookie(cookies[i]);
-								
-							//Salimos del while
-							i=cookies.length;
+							cookies[i].setValue(email); 
+							response.addCookie(cookies[i]); //Agregamos la cookie a la respuesta.
+
+							i=cookies.length; //Salimos del bucle.
+							
 						}
+						
 						i++;
+						
 					}
-				}else{
-					err=errores[1];
+					
+				} else {
+					
+					error = "El email ya está en uso";
 				}
 
 				
 			}
 			
-			if(!telf.equals("")){
-				user.setTelf(telf);
-			}
+			if(!telefono.equals("")) usuario.setTelefono(telefono);
+			if(!apellidos.equals("")) usuario.setApellidos(apellidos);
+			if(!pass.equals("")) usuario.setPassword(pass);
+			if(!direccion.equals("")) usuario.setDireccion(direccion);
 			
-			if(!apll.equals("")){
-				user.setApellidos(apll);
-			}
-			
-			if(!pass.equals("")){
-				user.setClave(pass);
-			}
-			
-			if(!dir.equals("")){
-				user.setDireccion(dir);
-			}
+			daousuario.modificaDatos(usuario, emaildeantes); //Actualizamos los datos.
+			sesion.setAttribute ("usuario", usuario); //Actualizamos el usuario.
 
-			//Realizamos el cambio
-			daou.actualizar(user,emailAntiguo);
+			model.addAttribute("usuario", usuario); //Devolvemos el usuario a la lista.
+			model.addAttribute("error", error);
+
+			return "bienvenido";
 			
-			//Actualizamos el objeto DtoUsuario de la sesion
-			session.setAttribute ("usuario",user);
-			
-			//Devolvemos el usuario a la lista.
-			model.addAttribute("usuario", user);
-			model.addAttribute("err", err);
-			
-			//Vista bienvenido.jsp
-			vista= vistas[3];
-		}catch(NullPointerException e){//Si no se ha creado la sessión correctamente
-			//Vista para que inicie sesion index.jsp
-			vista=vistas[0];
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
+
 			System.out.println("Sesion no creada, volver a registrar.");
+			
+			return "index";
 		}
-		return vista;
+
 	}
-	/**
-	 * Método para mostrar la lista de productos comprados en la sesion
-	 * 
-	 * @param request de tipo HttpServletRequest
-	 * @param model de tipo Model
-	 * @return vista de tipo String
-	 */
+
+	
+	//Método que muestra la lista de productos comprados.
 	@RequestMapping(value = "/mostrarCarrito", method = RequestMethod.GET)
 	public String mostrarCarrito(HttpServletRequest request, Model model) {
-		String vista;
-		
-		String [] errores = {"Lista de compra no inicializada","Lista de compra vac&iacute;a"};
-		String err=null;
+
+		String error = "";
 		
 		List<DtoProducto> listaCompra =null;
-		try{
-			//Método que obtiene la sesión de la petición, y si no existe da error
-			HttpSession session = request.getSession(false);
+		
+		try {
+
+			HttpSession sesion = request.getSession(false);
 			
 			//Obtenemos la lista de compra
-			listaCompra = (List<DtoProducto>) session.getAttribute("lista");
+			listaCompra = (List<DtoProducto>) sesion.getAttribute("lista"); //Obtenemos la lista de la compra.
 			
 			
-			if(listaCompra==null){
+			if(listaCompra == null) {
+				
 				System.out.println("Lista de Compra no inicializada");
 				
-				//Avisamos de error.
-				err=errores[0];
-				model.addAttribute("err",err);
+				error = "Lista de la compra no inicializada";
 				
-				//Extremos los producos y los pasamos a la vista
-				model.addAttribute("lista",daop.read());
+				model.addAttribute("error", error);
+				model.addAttribute("lista",daoproducto.leeProductos()); //Extraemos los productos y los pasamos a la vista.
 				
-				//Mostramos bienvendio.jsp
-				vista = vistas[4];
-			}else{
-				if(listaCompra.isEmpty())
-				{
+				return "compra";
+				
+			} else {
+				
+				if(listaCompra.isEmpty()) {
+					
 					System.out.println("Lista de Compra vacía");
 				
 					//Avisamos de error.
-					err=errores[1];
-					model.addAttribute("err",err);
+					error = "Lista de la compra vacía";
+					model.addAttribute("error", error);
+
+					model.addAttribute("lista", daoproducto.leeProductos()); //Extraemos los productos y los pasamos a la vista.
 					
-					//Extremos los producos y los pasamos a la vista
-					model.addAttribute("lista",daop.read());
+					return "compra";
 					
-					//Mostramos bienvendio.jsp
-					vista = vistas[4];
+				} else {
 					
+					model.addAttribute("lista", listaCompra);
+
+					return "carrito";
 					
-				}else{
-					model.addAttribute("lista",listaCompra);
-					
-					//Mostramos carrito.jsp
-					vista = vistas[5];
 				}
+				
 			}
-		}catch(NullPointerException e){//Si no se ha creado la sessión correctamente
-			//Vista para que inicie sesion index.jsp
-			vista=vistas[0];
+			
+		} catch(NullPointerException e) { //Si no se ha creado la sesión correctamente.
+
 			System.out.println("Sesion no creada, volver a registrar.");
+			
+			return "index";
+			
 		}
-		return vista;
+		
 	}
-	/**
-	 * Método para mostrar los terminos y condiciones del servicio.
-	 * 
-	 * @param request de tipo HttpServletRequest
-	 * @param model de tipo Model
-	 * @return vista de tipo String
-	 */
-	@RequestMapping(value = "/terminos", method = RequestMethod.GET)
-	public String terminos(HttpServletRequest request, Model model) {
-		String vista;
-		vista=vistas[6];
-		return vista;
-	}
-	
-	
 	
 }

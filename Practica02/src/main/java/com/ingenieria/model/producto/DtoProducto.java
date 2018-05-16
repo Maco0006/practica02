@@ -2,170 +2,85 @@ package com.ingenieria.model.producto;
 
 
 
-/**
- * Definición del Objeto de la clase DtoProducto
-
- * 
- * @author Pablo Castillo Segura y Andrés Ruiz Peñuela
-
- *
- */
-
-
 public class DtoProducto {
 
-	private int id;
-	private String nombre;
-	private double importe;
-	private int unidades;
-	private String concepto;
-	private String imagen;
+	private int idproducto;
+	private String nombreprod;
+	private double precio;
+	private String descripcion;
+	private String imagenproducto;
+	private int cantidad;
 
 
-/**
-	 * Costructor de la clase DtoProducto
-
-	 * 
-	 * @param id id del producto
-
-	 * @param nombre Nombre del Producto
-
-	 * @param importe Precio del Producto
-
-	 * @param concepto Descrpción del Producto
-
-	 * @param imagen Imagen del Producto
-
-	 * @param unidades Unidades del Producto en la base de datos
-
-	 */
+	public DtoProducto (int idproducto, String nombreprod, double precio, String descripcion, String imagenproducto, int cantidad){
 	
-
-public DtoProducto (int id, String nombre,double importe,String concepto,String imagen,int unidades){
-
-		this.id=id;
-
-		this.nombre=nombre;
-
-		this.imagen=imagen;
-
-		this.concepto=concepto;
-
-		this.importe=importe;
-
-		this.unidades=unidades;
-	}
-
-
-//Constuctor por defecto
-
-
-public DtoProducto (){
-
-		this.id=0;
-
-		this.nombre="";
-
-		this.concepto="";
-
-		this.imagen="";
-
-		this.importe=0.0;
-
-		this.unidades=0;
-
-		
-	}
-
-
-//Métodos get
-	
-
-public int getId() {
-
-		return id;
-
+			this.idproducto = idproducto;
+			this.nombreprod = nombreprod;
+			this.precio = precio;
+			this.descripcion = descripcion;
+			this.imagenproducto = imagenproducto;
+			this.cantidad = cantidad;
+			
 	}
 	
-
-public String getNombre() {
-
-		return nombre;
-
-	}
-
-
-public double getImporte() {
-
-		return importe;
+	public DtoProducto (){
 	
-	}
-
-
-public String getConcepto() {
-
-		return concepto;
-
+			this.idproducto = 0;
+			this.nombreprod = "";
+			this.precio = 0.0;
+			this.descripcion = "";
+			this.imagenproducto = "";
+			this.cantidad = 0;
+			
 	}
 	
-
-public String getImagen() {
-
-		return imagen;
-
+	
+	public int getIdproducto() {
+		return idproducto;
+	}
+	public void setIdproducto(int idproducto) {
+		this.idproducto = idproducto;
 	}
 	
-
-public int getUnidades() {
-
-		return unidades;
-
+	
+	public String getNombreprod() {
+		return nombreprod;
 	}
-
-	
-
-//Métodos set
-	
-
-public void setId(int id) {
-
-		this.id = id;
-
+	public void setNombreprod(String nombreprod) {
+		this.nombreprod = nombreprod;
 	}
 	
-
-public void setNombre(String nombre) {
-
-		this.nombre = nombre;
-
+	
+	public double getPrecio() {
+		return precio;
+	}
+	public void setPrecio(double precio) {
+		this.precio = precio;
 	}
 	
-
-public void setImporte(double importe) {
-
-		this.importe = importe;
-
+	
+	public String getDescripcion() {
+		return descripcion;
+	}
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
 	}
 	
-
-public void setConcepto(String concepto) {
-
-		this.concepto = concepto;
-
+	
+	public String getImagenproducto() {
+		return imagenproducto;
+	}
+	public void setImagenproducto(String imagenproducto) {
+		this.imagenproducto = imagenproducto;
 	}
 	
-
-public void setImagen(String imagen) {
-
-		this.imagen = imagen;
-
+	
+	public int getCantidad() {
+		return cantidad;
+	}
+	public void setCantidad(int cantidad) {
+		this.cantidad = cantidad;
 	}
 	
-
-public void setUnidades(int unidades) {
-
-		this.unidades = unidades;
-
-	}
-
+	
 }

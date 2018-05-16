@@ -20,61 +20,24 @@ import com.ingenieria.model.user.DtoUsuario;
 public class Metodos {
 
 
-	/**
-	 * Método para inicializar la sesión
-
-	 * 
-	 * @param request Petición del cliente
-
-	 * @param usuarioDB Objeto de la clase Usuario a incluir en la sesión
-
-	 * @param listaCompra Lista de la compra a incluir en la sesión
-	 */
-
-
-	public static void CrearSession(HttpServletRequest request, DtoUsuario usuarioDB,List<DtoProducto> listaCompra){
+	public static void CrearSession(HttpServletRequest request, DtoUsuario userdatab, List<DtoProducto> listaCompra){ //Inicializamos la sesión.
 
 		Date today = new Date();
-	//Creamos la sesión
+		HttpSession sesion = request.getSession(true); 
+
+		SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm:SS"); //Obtenemos la fecha de creación de la sesión.
+    	String fecha = DATE_FORMAT.format(today);
+    	System.out.println("Conexion: " + fecha);
+
+		sesion.setAttribute("fecha", fecha); //Añadimos la fecha a la sesión.
+		sesion.setAttribute ("usuario",userdatab); //Añadimos el usuario a la sesión.
+		sesion.setAttribute("lista", listaCompra);
 
 
-		HttpSession session = request.getSession(true);
-		//Obtenemos fecha de creación de la sesión
+		Double total=0.0;		
+		sesion.setAttribute("total", total);
 
-
-		SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm:SS");
-
-    		String date = DATE_FORMAT.format(today);
-
-    		System.out.println("Conexion: " + date);
-    	
-		
-		//Añadimos la fecha en la sesion
-
-		session.setAttribute("date", date);
-
-		
-		
-		//Añadimos el usuario en la sesión
-
-		session.setAttribute ("usuario",usuarioDB);
-
-
-		//Establecemos la lista de productos a null
-
-		session.setAttribute("lista", listaCompra);
-
-
-		//Inicializamos el total de la sesión.
-
-		Double total=0.0;
-		
-		session.setAttribute("total", total);
-
-
-		//Establecemos la expiración de la sesión a 1 hora
-
-		session.setMaxInactiveInterval(60*60);
+		sesion.setMaxInactiveInterval(60*60); //Tiempo de expiración: 1 hora.
 
 	}
 

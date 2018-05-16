@@ -5,129 +5,91 @@ import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/**
- * Acceso a los datos del usuario.
- * 
- * @author Pablo Castillo Segura y Andrés Ruiz Peñuela
- */
+
 public class DaoUsuario implements DaoUsuario_Interface {
 	
-	private JdbcTemplate jdbcTemplate;//Para trabajar con JDBC que nos proporciona spring
-	private DataSource dataSource;//Hace referencia al datasource de la base de datos que sera sostenida en la tabla.
+	private JdbcTemplate jdbcTemplate;
+	private DataSource dataSource;
 	
-	/**
-	 * Recibe un dataSource, el cual, es suministrado por inyección, dado que este objeto esta precargado
-	 * en el sppring bean configuration.
-	 * Este método asigna el valor a la variable privada, y genera una instancia de la template que nos 
-	 * proporciona spring pasandole la conexión con la base de datos.
-	 * 
-	 * @param dataSource
-	 */
+	
 	public void setDataSource(DataSource dataSource) {
 	   this.dataSource = dataSource;
 	   this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 	
-	/**
-	 * Método para insertar usuarios en la base de datos
-	 */
-	public void create(DtoUsuario usuarios){
-		//Sentencia SQL
-		String sql = "insert into usuarios values(?,?,?,?,?,?,?)";
-		
-		//Indicamos los parametros (tipo de objeto generico), para la consulta
-		//Cuidado con el orden de parámetros, ya que la base de datos puede interpretar mal
-		Object[] parametros ={usuarios.getNombre(),usuarios.getEmail(),
-								usuarios.getApellidos(),usuarios.getClave(),
-								usuarios.getDireccion(),usuarios.getTelf(),
-								usuarios.getAdmin()};
 
+	//Para insertar usuarios en la base de datos.
+	public void insertaUsuario(DtoUsuario usuario){
+
+		String sql = "insert into usuarios values(?,?,?,?,?,?,?)";
+		Object[] parametros ={usuario.getNombre(), usuario.getPassword(), usuario.getApellidos(), usuario.getEmail(), usuario.getDireccion(), usuario.getTelefono(), usuario.getAdmin()};
 		this.jdbcTemplate.update(sql,parametros);
+		
 	}
 	
-	/**
-	 * Método para devolver si existe usuario en la base de datos, dado su nombre
-	 */
-	public Boolean existsName(String idName){
-		//Sentencia SQL
+
+	//Comprueba si existe un usuario con un determinado nombre en la base de datos.
+	public Boolean buscaNombre(String nombreuser){
+
 		String sql = "select * from usuarios where nombre = ?";
-		
-		//Parámetros para la consulta
-		Object[ ] parametros = {idName}; 
-		
-		//Instancia de la clase de mapeo del usuario
+		Object[ ] parametros = {nombreuser}; 
 		UsuarioMapper mapper = new UsuarioMapper();
-		
-		//Devuelve los usuarios con el nombre
+
 		List<DtoUsuario> usuarios = this.jdbcTemplate.query(sql, parametros, mapper);
-		
-		//Si devuelve un usuario vacío, no existe
+
 		if (usuarios.isEmpty()) return false;
 		else return true;
+		
 	}
 	
-	/**
-	 * Método para devolver si existe usuario en la base de datos, dado su email
-	 */
-	public Boolean existsEmail(String idEmail){
-		//Sentencia SQL
+
+	//Comprueba si existe un usuario a través del email.
+	public Boolean buscaEmail(String emailuser){
+		
 		String sql = "select * from usuarios where email = ?";
-		
-		//Parámetros para la consulta
-		Object[ ] parametros = {idEmail}; 
-		
-		//Instancia de la clase de mapeo del usuario
+		Object[ ] parametros = {emailuser}; 
 		UsuarioMapper mapper = new UsuarioMapper();
-		
-		//Devuelve los usuarios con el nombre
+
 		List<DtoUsuario> usuarios = this.jdbcTemplate.query(sql, parametros, mapper);
 		
-		//Si devuelve un usuario vacío, no existe
 		if (usuarios.isEmpty()) return false;
 		else return true;
 	}
 	
-	/**
-	 * Método para devolver el usuario de la base de datos, dado su email
-	 */
-	public DtoUsuario obtenerUsu (String email){
-		//Sentencia SQL
+
+	//Busca un usuario por su email y, si existe en la base de datos, devuelve sus datos.
+	public DtoUsuario extraerUsuario(String email){
+
 		String sql= "select * from usuarios where email = ? ";
-		
-		//Parámetros para la consulta
 		Object[] parametros = {email}; //Necesaria para query
-		
-		//Instancia de la clase de mapeo del usuario
 		UsuarioMapper mapper = new UsuarioMapper();
-		
-		//Devuelve los usuarios con el nombre
+
 		List<DtoUsuario> usu = this.jdbcTemplate.query(sql,parametros, mapper);
 		
+		if (usu.isEmpty()) return null;
+		else return usu.get(0); //En caso de que exista el usuario, devolverá el primer objeto de la lista, que será el usuario buscado.
+
+	}
+
+	
+	//Actualiza los datos del usuario.
+	public void modificaDatos(DtoUsuario usuario, String email){
 		
-		//Si no hay usuarios
-		if (usu.isEmpty()){
-			//Devuelve null
-			return null;
-			
-		}else{//Si hay
-			//Devolvemos el primer objeto de la lista, que será el buscado
-			return usu.get(0);
-		}
+		String sql = "update usuarios set  email= ?, nombre= ?,  apellidos= ?, direccion= ?, telefono=?, password= ? where email= ?";
+        this.jdbcTemplate.update(sql, usuario.getEmail(), usuario.getNombre(), usuario.getApellidos(), usuario.getDireccion(), usuario.getTelefono(), usuario.getPassword(), email);
+        
 	}
-	/**
-	 * Método para modificar cualquier dato del usuario.
-	 */
-	public void actualizar(DtoUsuario usr,String email){
-		String sql = "update usuarios set  email= ?, nombre= ?,  apellidos= ?, direccion= ?, telefono=?, clave= ? where email= ?";
-        this.jdbcTemplate.update(sql,usr.getEmail(),usr.getNombre(),usr.getApellidos(),usr.getDireccion(),usr.getTelf(),usr.getClave(),email);
+
+	
+	//Obtiene los usuarios y administradores de la base de datos.
+	public List<DtoUsuario> leeUsuarios(){
+		
+		String sql = "select * from usuarios";
+		UsuarioMapper mapper = new UsuarioMapper();
+		List<DtoUsuario> usuarios = this.jdbcTemplate.query(sql, mapper);
+		
+		return usuarios;
+		
 	}
-	/**
-	 * Método para obtener los usuarios y administradores de la base de datos.
-	 */
-		public List<DtoUsuario> read(){
-			String sql = "select * from usuarios";
-			UsuarioMapper mapper = new UsuarioMapper();
-			List<DtoUsuario> miembros = this.jdbcTemplate.query(sql, mapper);
-			return miembros;
-		}
+	
 }
